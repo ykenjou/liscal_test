@@ -7,6 +7,12 @@
 //
 
 #import "AppDelegate.h"
+#import "listViewController.h"
+#import "calenderViewController.h"
+#import "addViewController.h"
+#import "reminderViewController.h"
+#import "settingViewController.h"
+#import <EventKit/EventKit.h>
 
 @implementation AppDelegate
 
@@ -19,8 +25,50 @@
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     // Override point for customization after application launch.
     self.window.backgroundColor = [UIColor whiteColor];
+    
+    rootViewController_ = [UITabBarController new];
+    listViewController *tab1 = [listViewController new];
+    calenderViewController *tab2 = [calenderViewController new];
+    addViewController *tab3 = [addViewController new];
+    reminderViewController *tab4 = [reminderViewController new];
+    settingViewController *tab5 = [settingViewController new];
+    
+    UINavigationController *naviLsitViewController = [[UINavigationController alloc] initWithRootViewController:tab1];
+    
+    UINavigationController *naviCalendarViewController = [[UINavigationController alloc] initWithRootViewController:tab2];
+    [UINavigationBar appearance].barTintColor = [UIColor colorWithRed:0.392 green:0.38 blue:0.812 alpha:1.0];
+    [UINavigationBar appearance].titleTextAttributes = @{NSForegroundColorAttributeName:[UIColor whiteColor]};
+    
+    NSArray *controllers = [NSArray arrayWithObjects:naviLsitViewController,naviCalendarViewController,tab3,tab4,tab5, nil];
+    [(UITabBarController *)rootViewController_ setViewControllers:controllers animated:NO];
+    
+    //タブの背景色とアイコンのカラーを指定
+    [UITabBar appearance].barTintColor = [UIColor colorWithRed:0.392 green:0.38 blue:0.812 alpha:1.0];
+    [[UITabBar appearance] setTintColor:[UIColor whiteColor]];
+    
+    //タブ選択時のフォントとカラー
+    UIFont *font = [UIFont fontWithName:@"HelveticaNeue-Bold" size:10.0f];
+    NSDictionary *selectedAttributes = @{NSFontAttributeName : font,NSForegroundColorAttributeName : [UIColor whiteColor]};
+    
+    [[UITabBarItem appearance] setTitleTextAttributes:selectedAttributes forState:UIControlStateSelected];
+    
+    //タブ非選択時のフォントとカラー
+    NSDictionary *attributesNormal = @{NSFontAttributeName : font,NSForegroundColorAttributeName : [UIColor colorWithRed:0.486 green:0.839 blue:0.961 alpha:1.0]};
+    
+    [[UITabBarItem appearance] setTitleTextAttributes:attributesNormal forState:UIControlStateNormal];
+    
+    //ステータスバーの文字色を白に変更
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
+    
+    [self.window setRootViewController:rootViewController_];
     [self.window makeKeyAndVisible];
+    
     return YES;
+}
+
+-(void)eventStoreChangedNotification:(NSNotification *)notification
+{
+    NSLog(@"Event store changed");
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application
