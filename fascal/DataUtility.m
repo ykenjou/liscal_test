@@ -33,8 +33,8 @@
 +(NSDate *)dateAtBeginningOfDayForDate:(NSDate *)inputDate
 {
     NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar];
-    //NSTimeZone *timezone = [NSTimeZone systemTimeZone];
-    //[calendar setTimeZone:timezone];
+    NSTimeZone *timezone = [NSTimeZone systemTimeZone];
+    [calendar setTimeZone:timezone];
     
     NSDateComponents *dateCompos = [calendar components:NSYearCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit fromDate:inputDate];
     
@@ -54,6 +54,25 @@
     [dateComps setYear:numberOfYears];
     
     NSDate *newDate = [calendar dateByAddingComponents:dateComps toDate:inputDate options:0];
+    
+    
+    return newDate;
+}
+
++(NSDate *)dateByAddingMonthsFirstDay:(NSInteger)numberOfMonths toDate:(NSDate *)inputDate
+{
+    NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar];;
+    
+    NSDateComponents *dateComps = [[NSDateComponents alloc] init];
+    [dateComps setMonth:numberOfMonths];
+    
+    NSDate *newDate = [calendar dateByAddingComponents:dateComps toDate:inputDate options:0];
+    
+    NSDateComponents *firstDayComps = [calendar components:NSYearCalendarUnit|NSMonthCalendarUnit|NSWeekdayCalendarUnit fromDate:newDate];
+    [firstDayComps setDay:1];
+    
+    newDate = [calendar dateFromComponents:firstDayComps];
+    
     return newDate;
 }
 

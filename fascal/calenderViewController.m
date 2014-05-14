@@ -11,7 +11,6 @@
 #import "calendarDayCell.h"
 #import "calendarFlowLayout.h"
 #import "calendarAccessCheck.h"
-#import "getEKData.h"
 #import <QuartzCore/QuartzCore.h>
 
 @class calendarDayCell;
@@ -22,6 +21,7 @@
 @property(nonatomic)CGPoint offsetPoint;
 @property(nonatomic)NSCalendar *calendar;
 @property(nonatomic,strong) NSDate *nowDate;
+@property(nonatomic) NSTimer *handleTimer;
 
 @end
 
@@ -55,7 +55,7 @@ static float weekDayFontSize = 12.0f;
     [self resetCalendarDate];
     [self dateChangeNotification];
     
-    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    _screenRect = [[UIScreen mainScreen] bounds];
     
     calendarFlowLayout *calLayout = [calendarFlowLayout new];
     
@@ -67,7 +67,7 @@ static float weekDayFontSize = 12.0f;
     [calLayout setMinimumInteritemSpacing:spacing];
     [calLayout setMinimumLineSpacing:spacing];
     
-    _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 20, screenRect.size.width, screenRect.size.height -20 -20 -44 -49) collectionViewLayout:calLayout];
+    _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 20, _screenRect.size.width, _screenRect.size.height -20 -20 -44 -49) collectionViewLayout:calLayout];
     [_collectionView setDataSource:self];
     [_collectionView setDelegate:self];
     
@@ -76,8 +76,6 @@ static float weekDayFontSize = 12.0f;
     [_collectionView setBackgroundColor:[UIColor whiteColor]];
     
     _collectionView.showsVerticalScrollIndicator = NO;//縦スクロールバーの表示制御
-    
-    //[_collectionView reloadData];
     
     //コレクションビューをサブビューにセット
     [self.view addSubview:_collectionView];
@@ -93,10 +91,12 @@ static float weekDayFontSize = 12.0f;
     self.navigationItem.rightBarButtonItem = todayButton;
     
     //週のラベル表示
-    UIView *weekDayView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenRect.size.width, 20)];
+    UIView *weekDayView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, _screenRect.size.width, 20)];
     weekDayView.backgroundColor = [UIColor whiteColor];
+    weekDayView.layer.borderColor = [UIColor grayColor].CGColor;
+    weekDayView.layer.borderWidth = 0.5f;
     
-    UIFont *weekDayFont = [UIFont fontWithName:@"Helvetica-Bold" size:weekDayFontSize];
+    UIFont *weekDayFont = [UIFont fontWithName:@"Helvetica" size:weekDayFontSize];
     
     UILabel *sunday = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, cellWidth, 20)];
     sunday.text = @"日";
@@ -148,15 +148,20 @@ static float weekDayFontSize = 12.0f;
     calendarAccessCheck *check = [calendarAccessCheck new];
     [check EKAccessCheck];
     
-    getEKData *ekData = [getEKData new];
-    _sections = [ekData EKDataDictionary:_eventStore];
+    _ekData = [getEKData new];
+    _sections = [_ekData EKDataDictionary:_eventStore];
+    
+    NSString *eventDictionary = [_sections description];
     
     //NSLog(@"_sections %@",_sections);
+    
 }
 
 //viewの表示直前の処理
 -(void)viewWillAppear:(BOOL)animated
 {
+    [self calendarChangeNotification];
+    
     [super viewWillAppear:animated];
     
     //日付が変わっている場合にカレンダー表示を再設定する
@@ -179,8 +184,49 @@ static float weekDayFontSize = 12.0f;
 -(void)reloadCalendar:(NSNotification *)notification
 {
     [self resetCalendarDate];
-    NSLog(@"change time");
 }
+
+-(void)handleNotification:(NSNotification *)note
+{
+    [_handleTimer invalidate];
+    _handleTimer = [NSTimer timerWithTimeInterval:0.5 target:self selector:@selector(reloadView:) userInfo:nil repeats:NO];
+    [[NSRunLoop mainRunLoop] addTimer:_handleTimer forMode:NSDefaultRunLoopMode];
+}
+
+-(void)resetCalendarDate
+{
+    _nowDate = [NSDate date];
+    startDate = [self setStartDate:_nowDate];
+    endDate = [self setEndDate:_nowDate];
+    
+    allDays = [DataUtility daysBetween:startDate and:endDate];
+    firstDayIndex = [DataUtility daysBetween:startDate and:_nowDate];
+    [_collectionView reloadData];
+    //NSLog(@"reset done");
+}
+
+
+-(void)calendarChangeNotification
+{
+    [_eventStore requestAccessToEntityType:EKEntityTypeEvent completion:^(BOOL granted, NSError *error) {
+        if (granted) {
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleNotification:) name:EKEventStoreChangedNotification object:_eventStore];
+        }
+    }];
+}
+
+-(void)reloadView:(NSNotification *)notification
+{
+    [_handleTimer invalidate];
+    self.sections = [_ekData EKDataDictionary:_eventStore];
+    
+    NSString *sections = [self.sections description];
+    
+    NSLog(@"reloadView");
+    
+    [_collectionView reloadData];
+}
+
 
 //viewが他に移る前の処理
 - (void)viewWillDisappear:(BOOL)animated
@@ -210,17 +256,7 @@ static float weekDayFontSize = 12.0f;
     // Dispose of any resources that can be recreated.
 }
 
--(void)resetCalendarDate
-{
-    _nowDate = [NSDate date];
-    startDate = [self setStartDate:_nowDate];
-    endDate = [self setEndDate:_nowDate];
-    
-    allDays = [DataUtility daysBetween:startDate and:endDate];
-    firstDayIndex = [DataUtility daysBetween:startDate and:_nowDate];
-    [_collectionView reloadData];
-    //NSLog(@"reset done");
-}
+
 
 #pragma mark -collection view delegate
 
@@ -250,15 +286,58 @@ static float weekDayFontSize = 12.0f;
         return datecomponents;
     })()) toDate:startDate options:0];
     
-    NSLog(@"cellDate : %@",cellDate);
+    //NSLog(@"cellDate : %@",cellDate);
+    
+    NSTimeZone *timeZone = [NSTimeZone systemTimeZone];
+    NSInteger seconds = [timeZone secondsFromGMT];
+    NSDate *gtmDate = [cellDate dateByAddingTimeInterval:-seconds];
+    
+    NSArray *events = [_sections objectForKey:gtmDate];
+    //NSLog(@"timezone ,%@",timeZone);
+    //NSLog(@"seconds %d",seconds);
+    //NSLog(@"gtmDate %@",gtmDate);
+    //NSLog(@"eventArray %@",events);
+    
+    EKEvent *event;
+    float labelHeight = 13.0f;
+    
+    BOOL Holiday = NO;
+    NSInteger rows = 0;
+    if ([events count] > 4) {
+        rows = 4;
+    } else {
+        rows = [events count];
+    }
+    
+    if (events) {
+        for (int i = 0; i < rows; i++) {
+            event = [events objectAtIndex:i];
+            UILabel *eventLabel = [[UILabel alloc] initWithFrame:CGRectMake(1, (labelHeight * (i + 1)) + 2 , 43.2, 12.0)];
+            eventLabel.text = event.title;
+            eventLabel.textColor = [UIColor whiteColor];
+            eventLabel.tag = i + 2;
+            eventLabel.numberOfLines = 1;
+            eventLabel.adjustsFontSizeToFitWidth = NO;
+            eventLabel.lineBreakMode = NSLineBreakByClipping;
+            eventLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:10.0f];
+            eventLabel.backgroundColor = [UIColor colorWithCGColor:event.calendar.CGColor];
+            [dayCell addSubview:eventLabel];
+            
+            if (!Holiday) {
+                if ([event.calendar.title  isEqual: @"日本の祝日"])
+                {
+                    Holiday = YES;
+                }
+            }
+        }
+    }
     
     NSDateComponents *cellDateComponents = [_calendar components:NSYearCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit|NSWeekdayCalendarUnit fromDate:cellDate];
     
     NSDateComponents *nowDateComponents = [_calendar components:NSYearCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit fromDate:_nowDate];
     
     //日付ラベル処理
-    
-    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, cellWidth,10)];
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(1, 1, cellWidth-2,13)];
     //NSString *strYear = @(cellDateComponents.year).stringValue;
     NSString *strMonth = @(cellDateComponents.month).stringValue;
     NSString *strDay = @(cellDateComponents.day).stringValue;
@@ -291,17 +370,19 @@ static float weekDayFontSize = 12.0f;
         labelStr = [NSString stringWithFormat:@"%@",strDay];
     }
     
+    /*
     if (nowDateComponents.year == cellDateComponents.year && nowDateComponents.month == cellDateComponents.month && nowDateComponents.day == cellDateComponents.day) {
         dayCell.backgroundColor = [UIColor colorWithRed:0.949 green:0.973 blue:0.992 alpha:1.0];
         label.backgroundColor = [UIColor blackColor];
         label.textColor = [UIColor whiteColor];
     }
+     */
     
     label.text = labelStr;
-    label.font = [UIFont fontWithName:@"HelveticaNeue-Bold" size:11.0f];
+    label.font = [UIFont fontWithName:@"HelveticaNeue" size:11.0f];
     
     //土日の日付の文字色設定
-    if (cellDateComponents.weekday == 1)
+    if (cellDateComponents.weekday == 1 || Holiday)
     {
         label.textColor = [UIColor redColor];
     } else if (cellDateComponents.weekday == 7)
@@ -326,7 +407,7 @@ static float weekDayFontSize = 12.0f;
     //日付が今日だった場合の処理
     if (nowDateComponents.year == cellDateComponents.year && nowDateComponents.month == cellDateComponents.month && nowDateComponents.day == cellDateComponents.day) {
         dayCell.backgroundColor = [UIColor colorWithRed:0.949 green:0.973 blue:0.992 alpha:1.0];
-        label.backgroundColor = [UIColor blackColor];
+        label.backgroundColor = [UIColor colorWithRed:0.282 green:0.024 blue:0.647 alpha:1.0];
         label.textColor = [UIColor whiteColor];
     }
     
@@ -360,6 +441,7 @@ static float weekDayFontSize = 12.0f;
     
     self.navigationController.navigationBar.topItem.title = title;
     
+    
     return dayCell;
 }
 
@@ -367,14 +449,47 @@ static float weekDayFontSize = 12.0f;
 //選択時の色変更
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    //UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:indexPath];
+    UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:indexPath];
     //cell.contentView.backgroundColor = [UIColor blueColor];
+    cell.layer.borderWidth = 1.0f;
+    cell.layer.borderColor = [UIColor colorWithRed:0.282 green:0.024 blue:0.647 alpha:1.0].CGColor;
+    
+    NSDate *cellDate = [_calendar dateByAddingComponents:((^{
+        NSDateComponents *datecomponents = [NSDateComponents new];
+        datecomponents.day = indexPath.item;
+        return datecomponents;
+    })()) toDate:startDate options:0];
+    //NSLog(@"cellDate %@",cellDate);
+    
+    NSTimeZone *timeZone = [NSTimeZone systemTimeZone];
+    NSInteger seconds = [timeZone secondsFromGMT];
+    NSDate *gtmDate = [cellDate dateByAddingTimeInterval:-seconds];
+    
+    NSArray *events = [_sections objectForKey:gtmDate];
+    //NSLog(@"events %@",events);
+    
+    if ([_listView isDescendantOfView:self.view]) {
+        [_listView removeFromSuperview];
+        _listView = [[dayListView alloc] initWithFrame:CGRectMake(0, _screenRect.size.height - 287, _screenRect.size.width, 210) sectionDate:cellDate rowArray:events];
+        [self.view addSubview:_listView];
+    } else {
+    
+        _listView = [[dayListView alloc] initWithFrame:CGRectMake(0, _screenRect.size.height - 49, _screenRect.size.width, 210) sectionDate:cellDate rowArray:events];
+        _listView.tag = 10;
+        [self.view addSubview:_listView];
+    
+        [UIView animateWithDuration:0.2f delay:0 options:UIViewAnimationOptionCurveLinear animations:^ {
+            _listView.frame = CGRectMake(0, _screenRect.size.height - 287, _listView.frame.size.width, _listView.frame.size.height);
+        } completion:^(BOOL finished){
+        }];
+    }
 }
 
 //選択終了時の色変更
 -(void)collectionView:(UICollectionView *)collectionView didDeselectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    //UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:indexPath];
+    UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:indexPath];
+    cell.layer.borderWidth = 0.0f;
     //cell.contentView.backgroundColor = [UIColor whiteColor];
 }
 
@@ -385,11 +500,15 @@ static float weekDayFontSize = 12.0f;
         //cell.contentView.backgroundColor = [UIColor whiteColor];
         
         [self collectionView:collectionView didDeselectItemAtIndexPath:indexPath];
+        cell.layer.borderWidth = 0.0f;
     }
     
+    
     [[cell viewWithTag:1] removeFromSuperview];
-    //[[cell viewWithTag:2] removeFromSuperview];
-    //[[cell viewWithTag:3] removeFromSuperview];
+    [[cell viewWithTag:2] removeFromSuperview];
+    [[cell viewWithTag:3] removeFromSuperview];
+    [[cell viewWithTag:4] removeFromSuperview];
+    [[cell viewWithTag:5] removeFromSuperview];
 }
 
 -(void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView
@@ -415,7 +534,20 @@ static float weekDayFontSize = 12.0f;
         //[_collectionView setAlpha:0.5f];
         //[monthlyLabel setAlpha:1.0f];
         //[monthlyLabel2 setAlpha:1.0f];
+        
     }
+}
+
+-(void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
+{
+    if ([_listView isDescendantOfView:self.view]) {
+        [UIView animateWithDuration:0.2f delay:0 options:UIViewAnimationOptionCurveLinear animations:^ {
+            _listView.frame = CGRectMake(0, _screenRect.size.height-49, _listView.frame.size.width, _listView.frame.size.height);
+        } completion:^(BOOL finished){
+            [_listView removeFromSuperview];
+        }];
+    }
+
 }
 
 -(NSDate *)setStartDate:(NSDate *)date
@@ -454,8 +586,6 @@ static float weekDayFontSize = 12.0f;
 
 -(NSDate *)setEndDate:(NSDate *)date
 {
-    //NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar];
-    
     NSDate *futureDate = [_calendar dateByAddingComponents:((^{
         NSDateComponents *datecomponents = [NSDateComponents new];
         datecomponents.month = 11;
@@ -473,9 +603,22 @@ static float weekDayFontSize = 12.0f;
         return datecomponents;
     })()) toDate:futureDate options:0];
     
+    futureDateComponents = [_calendar components:NSYearCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit|NSWeekdayCalendarUnit fromDate:preEndDate];
+    NSInteger weekDay = futureDateComponents.weekday;
+    
+    if (weekDay != 7) {
+        weekDay = 7 - weekDay;
+        preEndDate = [_calendar dateByAddingComponents:((^{
+            NSDateComponents *datecomponents = [NSDateComponents new];
+            datecomponents.day = weekDay;
+            return datecomponents;
+        })()) toDate:preEndDate options:0];
+    }
+    
     NSTimeZone *timeZone = [NSTimeZone systemTimeZone];
     NSInteger seconds = [timeZone secondsFromGMTForDate:_nowDate];
     preEndDate = [preEndDate dateByAddingTimeInterval:seconds];
+    
     return preEndDate;
 }
 

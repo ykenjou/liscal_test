@@ -11,8 +11,8 @@
 #import "getEKData.h"
 
 @interface listViewController : UIViewController<UITableViewDelegate,UITableViewDataSource>
-@property (nonatomic,copy) NSMutableDictionary *sections;
-@property (nonatomic,copy) NSArray *sortedDays;
+@property (nonatomic) NSMutableDictionary *sections;
+@property (nonatomic) NSArray *sortedDays;
 @property (nonatomic) NSDateFormatter *sectionDateFormatter;
 @property (nonatomic) NSDateFormatter *cellDateFormatter;
 @property (nonatomic,retain) EKEventStore *eventStore;

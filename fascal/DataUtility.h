@@ -12,4 +12,5 @@
 +(NSInteger)daysBetween:(NSDate *)startDate and:(NSDate *)endDate;
 +(NSDate *)dateAtBeginningOfDayForDate:(NSDate *)inputDate;
 +(NSDate *)dateByAddingYears:(NSInteger)numberOfYears toDate:(NSDate *)inputDate;
++(NSDate *)dateByAddingMonthsFirstDay:(NSInteger)numberOfMonths toDate:(NSDate *)inputDate;
 @end

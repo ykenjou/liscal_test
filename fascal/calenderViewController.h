@@ -9,6 +9,8 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
 #import <EventKit/EventKit.h>
+#import "dayListView.h"
+#import "getEKData.h"
 
 @interface calenderViewController : UIViewController<UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,UICollectionViewDelegate>
 {
@@ -24,8 +26,14 @@
     UIColor *todayColor;
 }
 
-@property (strong,nonatomic) EKEventStore *eventStore;
-@property (strong,nonatomic) NSMutableDictionary *sections;
-@property (strong,nonatomic) NSDateFormatter *ymdFormatter;
+@property (nonatomic,retain) EKEventStore *eventStore;
+@property (nonatomic,copy) NSMutableDictionary *sections;
+@property (nonatomic,strong) NSDateFormatter *ymdFormatter;
+@property (nonatomic,strong) UIView *dayEventList;
+@property (nonatomic,strong) UITableView *dayEventTable;
+@property (nonatomic) dayListView *dayListView;
+@property (nonatomic) CGRect screenRect;
+@property (nonatomic) getEKData *ekData;
+@property (nonatomic) dayListView *listView;
 
 @end

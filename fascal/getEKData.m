@@ -16,8 +16,11 @@
 -(NSMutableDictionary *)EKDataDictionary:(EKEventStore *)eventStore
 {
     NSDate *now = [NSDate date];
-    NSDate *startDate = [DataUtility dateAtBeginningOfDayForDate:now];
-    NSDate *endDate = [DataUtility dateByAddingYears:1 toDate:startDate];
+    NSDate *preStartDate = [DataUtility dateAtBeginningOfDayForDate:now];
+    NSDate *startDate = [DataUtility dateByAddingMonthsFirstDay:-3 toDate:preStartDate];
+    NSDate *endDate = [DataUtility dateByAddingYears:1 toDate:preStartDate];
+    
+    NSLog(@"startDate %@",startDate);
     
     eventStore = [[EKEventStore alloc] init];
     NSPredicate *searchPrecidate= [eventStore predicateForEventsWithStartDate:startDate endDate:endDate calendars:nil];

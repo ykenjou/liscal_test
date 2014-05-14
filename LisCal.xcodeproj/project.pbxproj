@@ -10,6 +10,7 @@
 		F22FF63019136F7400F82B53 /* calendarAccessCheck.m in Sources */ = {isa = PBXBuildFile; fileRef = F22FF62F19136F7400F82B53 /* calendarAccessCheck.m */; };
 		F23A64BD1915FAE700D432CF /* getEKData.m in Sources */ = {isa = PBXBuildFile; fileRef = F23A64BC1915FAE700D432CF /* getEKData.m */; };
 		F2474FA818ACA8FE00B7664E /* DataUtility.m in Sources */ = {isa = PBXBuildFile; fileRef = F2474FA718ACA8FE00B7664E /* DataUtility.m */; };
+		F2627C27191DAF08007B8B7F /* dayListView.m in Sources */ = {isa = PBXBuildFile; fileRef = F2627C26191DAF08007B8B7F /* dayListView.m */; };
 		F26BC7D418B6973200317E1E /* calendarFlowLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = F26BC7D318B6973200317E1E /* calendarFlowLayout.m */; };
 		F271A81E1919362C00E24E07 /* UICircleView.m in Sources */ = {isa = PBXBuildFile; fileRef = F271A81D1919362C00E24E07 /* UICircleView.m */; };
 		F281003A189CE02400A243CB /* list_tab_ns.png in Resources */ = {isa = PBXBuildFile; fileRef = F2810038189CE02400A243CB /* list_tab_ns.png */; };
@@ -77,6 +78,8 @@
 		F23A64BC1915FAE700D432CF /* getEKData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = getEKData.m; sourceTree = "<group>"; };
 		F2474FA618ACA8FE00B7664E /* DataUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataUtility.h; sourceTree = "<group>"; };
 		F2474FA718ACA8FE00B7664E /* DataUtility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataUtility.m; sourceTree = "<group>"; };
+		F2627C25191DAF08007B8B7F /* dayListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dayListView.h; sourceTree = "<group>"; };
+		F2627C26191DAF08007B8B7F /* dayListView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = dayListView.m; sourceTree = "<group>"; };
 		F26BC7D218B6973200317E1E /* calendarFlowLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = calendarFlowLayout.h; sourceTree = "<group>"; };
 		F26BC7D318B6973200317E1E /* calendarFlowLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = calendarFlowLayout.m; sourceTree = "<group>"; };
 		F271A81C1919362C00E24E07 /* UICircleView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UICircleView.h; sourceTree = "<group>"; };
@@ -176,6 +179,8 @@
 				F23A64BC1915FAE700D432CF /* getEKData.m */,
 				F271A81C1919362C00E24E07 /* UICircleView.h */,
 				F271A81D1919362C00E24E07 /* UICircleView.m */,
+				F2474FA618ACA8FE00B7664E /* DataUtility.h */,
+				F2474FA718ACA8FE00B7664E /* DataUtility.m */,
 			);
 			name = common;
 			sourceTree = "<group>";
@@ -308,12 +313,12 @@
 		F2F1D37F189E3FFE004557CD /* calendar */ = {
 			isa = PBXGroup;
 			children = (
-				F2474FA618ACA8FE00B7664E /* DataUtility.h */,
-				F2474FA718ACA8FE00B7664E /* DataUtility.m */,
 				F2E387BC18AE2C1500DD4B3C /* calendarDayCell.h */,
 				F2E387BD18AE2C1500DD4B3C /* calendarDayCell.m */,
 				F26BC7D218B6973200317E1E /* calendarFlowLayout.h */,
 				F26BC7D318B6973200317E1E /* calendarFlowLayout.m */,
+				F2627C25191DAF08007B8B7F /* dayListView.h */,
+				F2627C26191DAF08007B8B7F /* dayListView.m */,
 			);
 			name = calendar;
 			sourceTree = "<group>";
@@ -435,6 +440,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F2627C27191DAF08007B8B7F /* dayListView.m in Sources */,
 				F2AC5109189BD09A00AEB3A7 /* addViewController.m in Sources */,
 				F2AC50CB189B1BE300AEB3A7 /* AppDelegate.m in Sources */,
 				F22FF63019136F7400F82B53 /* calendarAccessCheck.m in Sources */,
